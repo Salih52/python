@@ -1,53 +1,66 @@
-class Personel:
-    def __init__(self, adi, departmani, çalisma_yili, maasi):
-        self.adi = adi
-        self.departmani = departmani
-        self.çalisma_yili = çalisma_yili
-        self.maasi = maasi
+import sqlite3
 
-class Firma:
-    def __init__(self):
-        self.personel_listesi = []
+def create_database():
+    conn = sqlite3.connect('metinler.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS metinler (id INTEGER PRIMARY KEY, metin TEXT)''')
+    conn.commit()
+    conn.close()
 
-    def personel_ekle(self, personel):
-        self.personel_listesi.append(personel)
-
-    def personel_listele(self):
-        for personel in self.personel_listesi:
-            print("adi:", personel.adi)
-            print("Departmanidepartmani:", personel.departmani)
-            print("Çalışma Yılı:", personel.çalisma_yili)
-            print("Maasi:", personel.maasi)
-            print()
-
-    def maaş_zammi(self, personel, zam_orani):
-        for p in self.personel_listesi:
-            if p == personel:
-                p.maasi += p.maasi * (zam_orani / 100)
-
-    def personel_cikart(self, personel):
-        self.personel_listesi.remove(personel)
-
-personel1 = Personel("Ali", "Muhasebe", 5, 3000)
-personel2 = Personel("Veli", "İnsan Kaynakları", 3, 2500)
-personel3 = Personel("Ayşe", "Pazarlama", 2, 2000)
+def insert_metin(metin):
+    conn = sqlite3.connect('metinler.db')
+    c = conn.cursor()
+    c.execute('''INSERT INTO metinler (metin) VALUES (?)''', (metin,))
+    conn.commit()
+    conn.close()
 
 
+metin1 = input("İlk metni girin: ")
+metin2 = input("İkinci metni girin: ")
 
 
-firma1 = Firma()
+create_database()
+insert_metin(metin1)
+insert_metin(metin2)
+
+benzerKelimeler = set()
+
+def jaccard_hesapla(metin1, metin2):
+    
+    set1 = set(metin1.split())
+    set2 = set(metin2.split())
+    
+     
+    
+    for kelime in set1:
+       if kelime in set2:
+           benzerKelimeler.add(kelime)
+    
+    
+    birlesim = len(set1) + len(set2) - (len(benzerKelimeler) * 2)
+    kesisim = len(benzerKelimeler)
+    oran = kesisim / birlesim 
+    
+    
+    return oran
 
 
-print("Personel Listesi")
-firma1.personel_ekle(personel1)
-firma1.personel_ekle(personel2)
-firma1.personel_listele()
+benzerlik_orani = jaccard_hesapla(metin1, metin2)
 
-print("Zamlı Personel Listesi")
-firma1.maaş_zammi(personel1,10)
-firma1.maaş_zammi(personel2,20)
-firma1.personel_listele()
 
-print("Personel çıkarıldıktan sonraki Personel Listesi")
-firma1.personel_cikart(personel2)
-firma1.personel_listele()
+def yazdırma(benzerlik_orani):
+    with open('benzerlikDurumu.txt', 'w') as file:
+        if benzerlik_orani >= 0.5:
+            result = "Metinler birbirine benziyor."
+        else:
+            result = "Metinler birbirine benzemiyor."
+        print("Benzerlik Durumu: " + result + "Oran:" + str(benzerlik_orani))
+        file.write("Benzerlik Durumu: " + result + "   Oran:" + str(benzerlik_orani) + "\n")
+        file.write("Benzer Kelimeler: \n")
+        print("Benzer Kelimeler: ")
+        for kelime in benzerKelimeler:
+            print(kelime)
+            file.write(kelime + "\n")
+
+# Sonuçları yazdır
+yazdırma(benzerlik_orani)
