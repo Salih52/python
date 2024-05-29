@@ -1,1 +1,1 @@
-# python
+# python ödevleri
